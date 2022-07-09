@@ -2,7 +2,7 @@
 
 > Puppeteer 是一个运行在 Node 环境的 NPM 包，它提供了一个高级 API 来通过 DevTools 协议控制 Chromium 或 Chrome。Puppeteer 默认以无头浏览器模式运行，但是可以通过修改配置文件运行“有头”模式。
 
-个人对 Puppeteer 的理解就是：这是一个运行在 Node 环境的 **无头浏览器**，我们可以通过[官方文档](https://zhaoqize.github.io/puppeteer-api-zh_CN/)提供的 API 来使用它做一些事情。可以做哪些事情呢？
+个人对 Puppeteer 的理解就是：暂时把它理解为一个运行在 Node 环境的 **无头浏览器**，我们可以通过[官方文档](https://zhaoqize.github.io/puppeteer-api-zh_CN/)提供的 API 来使用它做一些事情。可以做哪些事情呢？
 
 - 生成页面 PDF。
 - **抓取 SPA（单页应用）并生成预渲染内容（即“SSR”（服务器端渲染））**。这是我们关注的重点！！！
@@ -14,7 +14,7 @@
 ## 学习目录
 
 - [先跑个 Demo 看看](#demo)
-- [获取html内容](#获取html内容)
+- [预渲染原理](#预渲染原理)
 
 ## Demo
 
@@ -106,4 +106,6 @@ program.parse();
 
 这个时候我们打开看看 html 的[内容](../puppeteer/downloads/content.html)。
 
-当然，还有一个问题需要解决，如果页面还没渲染完，直接使用 `page.content()` 去拿页面的内容时，页面的内容是不完整的。那我们需要在什么时机去拿呢？这个我们后面再说。
+看了上面两个例子，我们应该对 Puppeteer 有了一个大概的了解。这里再详细的解释一下 Puppeteer 到底是什么？其实 Puppeteer 只是一个 JSBridge 。我们通过调用 Puppeteer 的 API，来跟无头浏览器 或者 Chrome 内核来通信。也就是说 Puppeteer 是一个独立的 JS 库，只是我们 `yarn add puppeteer` 时，它的项目本身内会自带一个 Chrome 浏览器内核（Mac 下的目录地址：`node_modules/puppeteer/.local-chromium/mac-编码/chrome-mac/Chromium.app/Contents/MacOS/Chromium`）。因为它是一个独立的 JSBridge, 所以我们也可以通过参数 [option.executablePath](https://zhaoqize.github.io/puppeteer-api-zh_CN/#?product=Puppeteer&version=v15.3.1&show=api-puppeteerlaunchoptions) 给它指定一个 Chrome 浏览器（或者 Chrome 内核）的程序路径，来让它使用我们指定的浏览器做渲染。
+
+我们知道了 Puppeteer 是什么，也知道了 Puppeteer 的大致用法。但还有一个问题需要解决：我们该什么时机使用 `page.content()` 去拿页面的内容，才能保证页面的 DOM 内容是完整的。带着这个问题，我们继续往下学习。
