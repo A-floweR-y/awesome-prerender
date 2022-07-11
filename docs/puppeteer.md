@@ -109,3 +109,20 @@ program.parse();
 看了上面两个例子，我们应该对 Puppeteer 有了一个大概的了解。这里再详细的解释一下 Puppeteer 到底是什么？其实 Puppeteer 只是一个 JSBridge 。我们通过调用 Puppeteer 的 API，来跟无头浏览器 或者 Chrome 内核来通信。也就是说 Puppeteer 是一个独立的 JS 库，只是我们 `yarn add puppeteer` 时，它的项目本身内会自带一个 Chrome 浏览器内核（Mac 下的目录地址：`node_modules/puppeteer/.local-chromium/mac-编码/chrome-mac/Chromium.app/Contents/MacOS/Chromium`）。因为它是一个独立的 JSBridge, 所以我们也可以通过参数 [option.executablePath](https://zhaoqize.github.io/puppeteer-api-zh_CN/#?product=Puppeteer&version=v15.3.1&show=api-puppeteerlaunchoptions) 给它指定一个 Chrome 浏览器（或者 Chrome 内核）的程序路径，来让它使用我们指定的浏览器做渲染。
 
 我们知道了 Puppeteer 是什么，也知道了 Puppeteer 的大致用法。但还有一个问题需要解决：我们该什么时机使用 `page.content()` 去拿页面的内容，才能保证页面的 DOM 内容是完整的。带着这个问题，我们继续往下学习。
+
+## 预渲染的时机
+
+我们首先看一下 `page.content` 方法的介绍。
+
+>  page.content()
+> - returns: \<Promise\<string\>\>
+> - 返回页面的完整 html 代码，包括 doctype。
+
+从介绍上看，`page.content` 方法是仅用来获取预渲染的结果。也就是说，在 `page.content` 方法调用时，预渲染应该是处于完成状态才对。所以我们再去看看上一个步骤：`page.goto`。
+
+关于 `page.goto` 的介绍：
+> page.goto(url[, options])
+> - url <string> 导航到的地址. 地址应该带有http协议, 比如 https://
+> - options <Object> 导航配置，可选值:
+>
+> 
