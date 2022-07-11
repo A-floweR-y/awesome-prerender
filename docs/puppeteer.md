@@ -121,8 +121,29 @@ program.parse();
 从介绍上看，`page.content` 方法是仅用来获取预渲染的结果。也就是说，在 `page.content` 方法调用时，预渲染应该是处于完成状态才对。所以我们再去看看上一个步骤：`page.goto`。
 
 关于 `page.goto` 的介绍：
-> page.goto(url[, options])
-> - url <string> 导航到的地址. 地址应该带有http协议, 比如 https://
-> - options <Object> 导航配置，可选值:
->
+> page.goto(url\[, options\])
+> - url \<string\> 导航到的地址. 地址应该带有http协议, 比如 https://
+> - options \<Object\> 导航配置，可选值:
+>   - timeout \<number\> 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
+>   - waitUntil \<string\|Array\<string\>\> 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
+>     - load: 页面的load事件触发时
+>     - domcontentloaded: 页面的DOMContentLoaded事件触发时
+>     - networkidle0: 不再有网络连接时触发（至少500毫秒后）
+>     - networkidle2: 只有2个网络连接时触发（至少500毫秒后）
+>   - referer\<string\> 引用请求头。如果提供，它将优先于page.setExtraHTTPHeaders()设置的 referer 标头值。
 > 
+> 返回: \<Promise\<?Response\>\> Promise对象resolve后是主要的请求的响应。如果有多个跳转, resolve后是最后一次跳转的响应
+
+我们重点看一下 `options.waitUntil` 参数。默认是 `load` 事件触发时，也就是页面加载完成(`window.onload`)后。
+
+所以，当我们执行 `await page.goto('https://www.baidu.com/')` 时，`resolve` 的时机是 `window.onload` 之后。这就是我们调用 `page.content` 时能拿到完整 `html` 代码的原因。
+
+但在我们的项目中，在 `window.onload` 的时机去做预渲染并不适合我们，因为我们需要加载的资源一般比较多，但首屏渲染，或者说我们的骨架屏并不需要全部的资源加载完。
+
+所以我们去看看 `options.waitUntil` 的其他选项：
+
+1. `domcontentloaded`: 同样不适合我们，因为我们单页面的应用只有一个入口文件，这导致 `domcontentloaded` 事件往往在浏览器渲染 DOM 内容之前触发。
+2. `networkidle0`: **重点关注这个选项**，因为我们在预渲染中要使用这个选项。这个选项是说：“不再有网络连接时触发”。这是什么意思呢？我们的浏览器有一个请求队列，当我们发起请求时，浏览器会把这个请求添加到队列里。当请求完成后，浏览器会把这个请求从队列里移除。当队列的 length 为 0 的那一刻，浏览器就会触发 `networkidle0` 事件。哪怕在 1 毫秒之后，又有新的请求会进入队列。只要当下这一刻，请求队列的 length 为 0，就触发 `networkidle0` 事件。
+3. `networkidle2`: 跟 `networkidle0` 类似，只不过 0 变成了 2 而已。
+
+到目前为止，我们已经掌握预渲染的核心 API 了。但还有 API 需要我们去掌握一下，来让我们的预渲染更完善一点。
