@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title></title>
+</head>
+<body>
+    <h1></h1>
+</body>
+</html>
+<script>
+    const h1Tag = document.querySelector('h1');
+    h1Tag.innerText = window.env && window.env.isPrerender
+        ? '当前是预渲染环境'
+        : '当前是浏览器环境'
+</script>
