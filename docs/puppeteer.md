@@ -200,14 +200,72 @@ page.evaluateOnNewDocument(function() {
 </script>
 ```
 
+我将写两段脚本，一段脚本将在预渲染环境打开上面的 html 文件，另一段将在浏览器环境打开上面的 html 文件。
+
+预渲染环境下访问 html 脚本如下：
+
+```js
+// 引入 puppeteer
+const puppeteer = require('puppeteer');
+const staticServer = require('./startServer');
+// 启动一个静态服务器
+const { url, close } = staticServer();
+
+(async () => {
+    // 为了方便用户查看，将打开一个非无头浏览器
+    const browser = await puppeteer.launch({
+        // 使用非无头模式
+        headless: false,
+    });
+    // 启动一个页面
+    const page = await browser.newPage();
+    // 在页面钟注入环境变量脚本
+    await page.evaluateOnNewDocument(function() {
+        window.env = {
+            isPrerender: true,
+        };
+    });
+    // 访问静态服务器的地址
+    await page.goto(url);
+    // 等待 5 秒钟之后关闭页面
+    await new Promise((done) => setTimeout(done, 5000));
+    await browser.close();
+    close();
+})();
+```
+
+浏览器环境下访问 html 脚本如下：
+
+```js
+const childProcess = require('child_process');
+const staticServer = require('./startServer');
+// 启动一个静态服务器
+const { url, close } = staticServer();
+const openCommand = process.platform === 'darwin'
+    ? 'open'
+    : process.platform === 'win32'
+        ? 'start'
+        : 'xdg-open';
+
+// 打开浏览器
+childProcess.exec(`${openCommand} ${url}`);
+
+setTimeout(() => {
+    // 关闭静态服务器
+    close();
+    // 关闭子进程
+    process.exit();
+}, 5000);
+```
+
 为了方便测试，我在 `package.json` 的 scripts 中添加了两个命令。
 
 ```bash
-# 将打开一个浏览器，访问上面的 html。5 秒钟后静态服务器关闭
-$ yarn env:browser
-
 # 为了方便用户查看，将打开一个非无头浏览器，访问上面的 html。5 秒钟后静态服务器和非无头浏览器关闭
 $ yarn env:prerender
+
+# 将打开一个浏览器，访问上面的 html。5 秒钟后静态服务器关闭
+$ yarn env:browser
 ```
 
 [代码地址](../puppeteer/src/prerenderEnv/)
