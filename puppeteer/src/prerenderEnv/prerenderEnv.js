@@ -5,7 +5,7 @@ const staticServer = require('./startServer');
 const { url, close } = staticServer();
 
 (async () => {
-    // 启动一个正常的服务器
+    // 为了方便用户查看，将打开一个非无头浏览器
     const browser = await puppeteer.launch({
         // 使用非无头模式
         headless: false,
