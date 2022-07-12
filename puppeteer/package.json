@@ -5,10 +5,13 @@
   "license": "MIT",
   "scripts": {
     "screenshot": "node src/screenshot.js",
-    "pcontent": "node src/pageContent.js"
+    "pcontent": "node src/pageContent.js",
+    "env:browser": "node src/prerenderEnv/browserEnv.js",
+    "env:prerender": "node src/prerenderEnv/prerenderEnv.js"
   },
   "dependencies": {
     "commander": "^9.3.0",
+    "express": "^4.18.1",
     "puppeteer": "^15.3.0"
   }
 }
