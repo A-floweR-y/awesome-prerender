@@ -15,6 +15,9 @@
 
 - [先跑个 Demo 看看](#demo)
 - [预渲染原理](#预渲染原理)
+- [预渲染的时机](#预渲染的时机)
+- [在预渲染环境注入标识](#在预渲染环境注入标识)
+- [结束语](#结束语)
 
 ## Demo
 
@@ -106,6 +109,8 @@ program.parse();
 
 这个时候我们打开看看 html 的[内容](../puppeteer/downloads/content.html)。
 
+[代码地址](../puppeteer/src/pageContent.js.js)
+
 看了上面两个例子，我们应该对 Puppeteer 有了一个大概的了解。这里再详细的解释一下 Puppeteer 到底是什么？其实 Puppeteer 只是一个 JSBridge 。我们通过调用 Puppeteer 的 API，来跟无头浏览器 或者 Chrome 内核来通信。也就是说 Puppeteer 是一个独立的 JS 库，只是我们 `yarn add puppeteer` 时，它的项目本身内会自带一个 Chrome 浏览器内核（Mac 下的目录地址：`node_modules/puppeteer/.local-chromium/mac-编码/chrome-mac/Chromium.app/Contents/MacOS/Chromium`）。因为它是一个独立的 JSBridge, 所以我们也可以通过参数 [option.executablePath](https://zhaoqize.github.io/puppeteer-api-zh_CN/#?product=Puppeteer&version=v15.3.1&show=api-puppeteerlaunchoptions) 给它指定一个 Chrome 浏览器（或者 Chrome 内核）的程序路径，来让它使用我们指定的浏览器做渲染。
 
 我们知道了 Puppeteer 是什么，也知道了 Puppeteer 的大致用法。但还有一个问题需要解决：我们该什么时机使用 `page.content()` 去拿页面的内容，才能保证页面的 DOM 内容是完整的。带着这个问题，我们继续往下学习。
@@ -146,4 +151,67 @@ program.parse();
 2. `networkidle0`: **重点关注这个选项**，因为我们在预渲染中要使用这个选项。这个选项是说：“不再有网络连接时触发”。这是什么意思呢？我们的浏览器有一个请求队列，当我们发起请求时，浏览器会把这个请求添加到队列里。当请求完成后，浏览器会把这个请求从队列里移除。当队列的 length 为 0 的那一刻，浏览器就会触发 `networkidle0` 事件。哪怕在 1 毫秒之后，又有新的请求会进入队列。只要当下这一刻，请求队列的 length 为 0，就触发 `networkidle0` 事件。
 3. `networkidle2`: 跟 `networkidle0` 类似，只不过 0 变成了 2 而已。
 
-到目前为止，我们已经掌握预渲染的核心 API 了。但还有 API 需要我们去掌握一下，来让我们的预渲染更完善一点。
+到目前为止，我们已经掌握预渲染的核心 API 了。但还有一个小问题，当我们的页面是在预渲染环境运行时，我们希望知道我们所运行的环境是预渲染环境，从而做一些事情。
+
+做哪些事情呢？比如最常见的就是：不请求含有变化数据的接口（大部分接口都是这种情况）。为什么要这么做呢？假如说我们页面有一个获取当天日期的接口，那预渲染出来的结果就包含当天的日期。假如今天是 `2022年7月12日`。那当我们发布了我们的代码后，我们的页面就会显示成 `2022年7月12日`。就算今天已经不是 `2022年7月12日` 了，但在日期接口返回当天的日期前，就会一直显示为 `2022年7月12日`。
+
+所以，在预渲染环境时，关于一些含有变化数据的接口，我们是不能请求的。想做到这一点，需要我们知道我们的代码运行的环境是否是预渲染环境。
+
+## 在预渲染环境注入标识
+
+> page.evaluateOnNewDocument(pageFunction\[, ...args\])
+> - pageFunction \<function\|string\> 要在页面实例上下文中执行的方法
+> - ...args \<...Serializable\> 要传给 pageFunction 的参数
+> 
+> 返回: \<Promise\>
+>
+> 指定的函数在所属的页面被创建并且所属页面的任意 script 执行之前被调用。常用于修改页面js环境，比如给 Math.random 设定种子
+
+我们可以通过 `evaluateOnNewDocument` 方法来注入一个函数，这个函数会在页面被创建并且所属页面的任意 script 执行之前被调用。代码如下：
+
+```js
+page.evaluateOnNewDocument(function() {
+    window.env = {
+        isPrerender: true,
+    };
+});
+```
+
+这样我们就可以通过 `window.env.isPrerender` 来判断当前的环境是否是预渲染环境了。Demo 代码入下:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+</head>
+<body>
+    <h1></h1>
+</body>
+</html>
+<script>
+    const h1Tag = document.querySelector('h1');
+    h1Tag.innerText = window.env && window.env.isPrerender
+        ? '当前是预渲染环境'
+        : '当前是浏览器环境'
+</script>
+```
+
+为了方便测试，我在 `package.json` 的 scripts 中添加了两个命令。
+
+```bash
+# 将打开一个浏览器，访问上面的 html。5 秒钟后静态服务器关闭
+$ yarn env:browser
+
+# 为了方便用户查看，将打开一个非无头浏览器，访问上面的 html。5 秒钟后静态服务器和非无头浏览器关闭
+$ yarn env:prerender
+```
+
+[代码地址](../puppeteer/src/prerenderEnv/)
+
+## 结束语
+
+到这里我们已经足够实现一个简版的预渲染了。如果你想继续学习，请阅读 [实现一个简版的预渲染](./prerender-spa-plugin.md)。
