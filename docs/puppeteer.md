@@ -11,7 +11,7 @@
 - 捕获网站的 timeline trace，用来帮助分析性能问题。
 - 测试浏览器扩展。
 
-## 学习目录
+## 目录
 
 - [先跑个 Demo 看看](#demo)
 - [预渲染原理](#预渲染原理)
@@ -127,7 +127,7 @@ program.parse();
 
 关于 `page.goto` 的介绍：
 > page.goto(url\[, options\])
-> - url \<string\> 导航到的地址. 地址应该带有http协议, 比如 https://
+> - url \<string\> 导航到的地址. **地址应该带有http协议**, 比如 https://
 > - options \<Object\> 导航配置，可选值:
 >   - timeout \<number\> 跳转等待时间，单位是毫秒, 默认是30秒, 传 0 表示无限等待。可以通过page.setDefaultNavigationTimeout(timeout)方法修改默认值
 >   - waitUntil \<string\|Array\<string\>\> 满足什么条件认为页面跳转完成，默认是 load 事件触发时。指定事件数组，那么所有事件触发后才认为是跳转完成。事件包括：
@@ -272,4 +272,4 @@ $ yarn env:browser
 
 ## 结束语
 
-到这里我们已经足够实现一个简版的预渲染了。如果你想继续学习，请阅读 [实现一个简版的预渲染](./prerender-spa-plugin.md)。
+到这里我们已经足够实现一个简版的预渲染了。如果你想继续学习，请阅读 [实现一个简版的预渲染](./prerender.md)。
