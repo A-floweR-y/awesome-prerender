@@ -1,0 +1,34 @@
+.DS_Store
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore module version
+package-lock.json
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Editor directories and files
+*.zip
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.swp
+*.sln
+
+# output
+dist/
+coverage/
+.yarn-cache/
+
+# local env files
+.env.local
+.env.*.local
+.env

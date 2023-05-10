@@ -1,0 +1,12 @@
+{
+  "name": "prerender-mini",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test:server": "IS_CODE_TEST=true && node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}

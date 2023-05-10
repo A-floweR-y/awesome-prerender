@@ -6,3 +6,4 @@
 
 ## 学习目录
 1. [了解 Puppeteer](./docs/puppeteer.md)
+2. [实现一个简单版的预渲染](./docs/prerender-mini.md)
